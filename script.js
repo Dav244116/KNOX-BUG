@@ -1,155 +1,872 @@
 /* =========================================================
-   KNOX BUG
-   Harmless browser-only bug simulator
+   KNOX BUG v2
+   UNKNOWN STRAINS
+   Browser-only fictional malware simulator
    ========================================================= */
 
-const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
 let running = false;
-let startTime = null;
-let uptimeTimer = null;
-let simulationTimer = null;
+let infection = 0;
+let mutation = 0;
+let generation = 0;
+let instances = 0;
 
-let bugs = 0;
-let errors = 0;
-let glitches = 0;
+let bugTimer;
+let popupTimer;
+let effectTimer;
+let telemetryTimer;
 
-let bugTimer = null;
-let popupTimer = null;
-let glitchTimer = null;
-let statsTimer = null;
-
-const bugMessages = [
-  "Bug detected in simulated UI",
-  "Crawling bug activated",
-  "Visual anomaly detected",
-  "Simulated process behaving strangely",
-  "Unknown bug entered the interface",
-  "Bug swarm increasing",
-  "Fake system instability detected",
-  "KNOX BUG is having fun..."
+const strains = [
+  {
+    name: "VOID-13",
+    icon: "👁️",
+    type: "Visual anomaly",
+    behavior: "Distortion"
+  },
+  {
+    name: "REDWORM-X",
+    icon: "🪱",
+    type: "Swarm strain",
+    behavior: "Replication"
+  },
+  {
+    name: "BLACKOUT-7",
+    icon: "🌑",
+    type: "Shadow strain",
+    behavior: "Blackout"
+  },
+  {
+    name: "GLITCH-404",
+    icon: "⚡",
+    type: "Digital anomaly",
+    behavior: "Glitching"
+  },
+  {
+    name: "KX-MUTANT",
+    icon: "🧬",
+    type: "Adaptive strain",
+    behavior: "Mutation"
+  },
+  {
+    name: "UNKNOWN-0",
+    icon: "❓",
+    type: "Unclassified",
+    behavior: "Unknown"
+  }
 ];
 
-const errorMessages = [
-  "A simulated application error occurred.",
-  "KNOX BUG encountered a fake exception.",
-  "Visual subsystem stopped responding.",
-  "Simulated memory warning detected.",
-  "Fake critical process failure.",
-  "Browser simulation reports an anomaly."
+const behaviors = [
+  "Replication",
+  "Distortion",
+  "Glitching",
+  "Mutation",
+  "Blackout",
+  "Swarming",
+  "Unknown"
 ];
 
-const terminalMessages = [
-  "Initializing simulation...",
-  "Loading virtual bug engine...",
-  "Checking simulated processes...",
-  "Injecting visual bugs...",
-  "Activating glitch renderer...",
-  "Monitoring fake system load...",
-  "Scanning browser simulation...",
-  "Everything is fine... probably.",
-  "No real system changes detected."
-];
+function random(min,max) {
+  return Math.floor(Math.random() * (max-min+1)) + min;
+}
 
-/* =========================
-   CLOCK / HELPERS
-========================= */
-
-function timeNow() {
+function now() {
   return new Date().toLocaleTimeString([], {
-    hour12: false
+    hour12:false
   });
 }
 
-function random(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+/* =========================
+   BOOT
+========================= */
 
-function log(message, type = "normal") {
-  const logs = $("logs");
+let bootProgress = 0;
 
-  if (!$("logsToggle").checked) return;
+const bootTimer = setInterval(() => {
+
+  bootProgress += random(5,14);
+
+  if (bootProgress >= 100) {
+    bootProgress = 100;
+    clearInterval(bootTimer);
+
+    $("bootText").textContent =
+      "Simulation engine ready.";
+
+    setTimeout(() => {
+      $("boot").style.display = "none";
+    },700);
+  }
+
+  $("bootProgress").style.width =
+    bootProgress + "%";
+
+  const messages = [
+    "Initializing simulator...",
+    "Loading fictional strains...",
+    "Preparing visual engine...",
+    "Loading mutation system...",
+    "Starting telemetry...",
+    "Ready."
+  ];
+
+  $("bootText").textContent =
+    messages[Math.min(
+      messages.length-1,
+      Math.floor(bootProgress/18)
+    )];
+
+},250);
+
+
+/* =========================
+   LOGGING
+========================= */
+
+function event(message,type="normal") {
+
+  const box = $("events");
 
   const item = document.createElement("div");
-  item.className = "log";
 
-  const color = type === "danger"
-    ? "#ff2636"
-    : type === "success"
-      ? "#00ff66"
-      : "#777";
+  item.className = "event";
 
-  item.innerHTML = `
-    <time>${timeNow()}</time>
-    <span style="color:${color}">${message}</span>
+  item.innerHTML =
+    `<b>[${now()}]</b> ${message}`;
+
+  box.prepend(item);
+
+  while(box.children.length > 13) {
+    box.lastElementChild.remove();
+  }
+
+  terminal(message,type);
+}
+
+function terminal(message,type="normal") {
+
+  const box = $("terminal");
+
+  const item = document.createElement("div");
+
+  item.className = "term-line";
+
+  item.innerHTML =
+    `<b>[${now()}]</b> ${message}`;
+
+  box.appendChild(item);
+
+  while(box.children.length > 10) {
+    box.firstElementChild.remove();
+  }
+
+  box.scrollTop = box.scrollHeight;
+}
+
+
+/* =========================
+   STRAIN GENERATOR
+========================= */
+
+function generateStrain() {
+
+  const strain =
+    strains[random(0,strains.length-1)];
+
+  $("strainName").textContent =
+    strain.name;
+
+  $("bigStrain").textContent =
+    strain.name;
+
+  $("strainIcon").textContent =
+    strain.icon;
+
+  $("strainType").textContent =
+    strain.type;
+
+  $("behavior").textContent =
+    strain.behavior;
+
+  generation++;
+
+  mutation = random(5,40);
+
+  $("generation").textContent =
+    generation;
+
+  $("mutation").textContent =
+    mutation + "%";
+
+  $("mutationMeter").style.width =
+    mutation + "%";
+
+  $("signature").textContent =
+    makeSignature();
+
+  event(
+    `Generated fictional strain ${strain.name}`,
+    "success"
+  );
+}
+
+function makeSignature() {
+
+  const chars =
+    "ABCDEF0123456789";
+
+  let result = "";
+
+  for(let i=0;i<8;i++) {
+    result +=
+      chars[random(0,chars.length-1)];
+  }
+
+  return result;
+}
+
+
+/* =========================
+   MUTATION
+========================= */
+
+function mutate() {
+
+  const names = [
+    "X-" + random(100,999),
+    "KX-" + random(10,99),
+    "VX-" + random(1000,9999),
+    "NULL-" + random(10,99),
+    "RED-" + random(100,999)
+  ];
+
+  $("strainName").textContent =
+    names[random(0,names.length-1)];
+
+  $("bigStrain").textContent =
+    $("strainName").textContent;
+
+  $("behavior").textContent =
+    behaviors[random(0,behaviors.length-1)];
+
+  generation++;
+
+  mutation = random(35,100);
+
+  $("generation").textContent =
+    generation;
+
+  $("mutation").textContent =
+    mutation + "%";
+
+  $("mutationMeter").style.width =
+    mutation + "%";
+
+  $("signature").textContent =
+    makeSignature();
+
+  event(
+    "Strain mutation generated",
+    "danger"
+  );
+
+  glitch();
+
+}
+
+
+/* =========================
+   START
+========================= */
+
+function start() {
+
+  if(running) return;
+
+  running = true;
+
+  if($("strainName").textContent === "UNKNOWN-00") {
+    generateStrain();
+  }
+
+  $("mode").textContent =
+    "INFECTED";
+
+  $("mainTitle").textContent =
+    "SIMULATION INFECTED";
+
+  $("mainMessage").textContent =
+    "Fictional strain activity detected.";
+
+  event(
+    "Simulation infection started",
+    "danger"
+  );
+
+  bugTimer = setInterval(() => {
+
+    if($("bugs").checked) {
+      spawnBug();
+    }
+
+  },1300);
+
+  popupTimer = setInterval(() => {
+
+    if($("errors").checked) {
+      popup();
+    }
+
+  },4200);
+
+  effectTimer = setInterval(() => {
+
+    if($("glitches").checked) {
+      glitch();
+    }
+
+  },2100);
+
+  telemetryTimer =
+    setInterval(updateTelemetry,900);
+
+  updateTelemetry();
+}
+
+
+/* =========================
+   BUGS
+========================= */
+
+function spawnBug() {
+
+  const bug =
+    document.createElement("div");
+
+  bug.className = "bug";
+
+  bug.textContent =
+    Math.random() > .5
+      ? "🪲"
+      : "🐛";
+
+  bug.style.left =
+    random(0,90) + "vw";
+
+  bug.style.top =
+    random(5,85) + "vh";
+
+  bug.style.animationDuration =
+    random(5,11) + "s";
+
+  $("bugLayer").appendChild(bug);
+
+  instances++;
+
+  $("instances").textContent =
+    instances;
+
+  event(
+    "Simulated strain instance detected",
+    "danger"
+  );
+
+  setTimeout(() => {
+    bug.remove();
+  },12000);
+
+  sound(220,50);
+}
+
+
+/* =========================
+   POPUPS
+========================= */
+
+function popup() {
+
+  const box =
+    document.createElement("div");
+
+  box.className =
+    "fake-popup";
+
+  box.style.left =
+    random(4,72) + "vw";
+
+  box.style.top =
+    random(10,70) + "vh";
+
+  const codes = [
+    "0xKX404",
+    "0xVOID13",
+    "0xRED777",
+    "0xNULL01",
+    "0xBUG999"
+  ];
+
+  box.innerHTML = `
+    <div class="popup-title">
+      ⚠ SIMULATED ANOMALY
+    </div>
+
+    <div class="popup-body">
+
+      Fictional strain activity
+      detected in the simulation.
+
+      <br><br>
+
+      Signature:
+      <strong>${$("signature").textContent}</strong>
+
+      <br>
+
+      Code:
+      <strong>
+        ${codes[random(0,codes.length-1)]}
+      </strong>
+
+      <br>
+
+      <button>DISMISS</button>
+
+    </div>
   `;
 
-  logs.prepend(item);
+  $("popupLayer").appendChild(box);
 
-  while (logs.children.length > 14) {
-    logs.lastElementChild.remove();
+  box.querySelector("button")
+    .onclick = () => box.remove();
+
+  event(
+    "Simulated anomaly window displayed",
+    "danger"
+  );
+
+  setTimeout(() => {
+    box.remove();
+  },7000);
+
+  sound(160,70);
+}
+
+
+/* =========================
+   GLITCH
+========================= */
+
+function glitch() {
+
+  if(!$("glitches").checked &&
+     running) return;
+
+  document.body.classList.add(
+    "glitching"
+  );
+
+  setTimeout(() => {
+    document.body.classList.remove(
+      "glitching"
+    );
+  },random(250,900));
+
+  event(
+    "Visual corruption effect triggered"
+  );
+
+  sound(90,60);
+}
+
+
+/* =========================
+   TELEMETRY
+========================= */
+
+function updateTelemetry() {
+
+  if(!running) return;
+
+  infection += random(1,5);
+
+  if(infection > 100)
+    infection = 100;
+
+  const cpu =
+    random(25,95);
+
+  const ram =
+    random(30,90);
+
+  $("infection").textContent =
+    infection + "%";
+
+  $("infectionMeter").style.width =
+    infection + "%";
+
+  $("cpu").textContent =
+    cpu + "%";
+
+  $("cpuMeter").style.width =
+    cpu + "%";
+
+  $("ram").textContent =
+    ram + "%";
+
+  $("ramMeter").style.width =
+    ram + "%";
+
+  if(infection < 30)
+    $("threat").textContent = "LOW";
+
+  else if(infection < 70)
+    $("threat").textContent = "MEDIUM";
+
+  else if(infection < 90)
+    $("threat").textContent = "HIGH";
+
+  else
+    $("threat").textContent = "CRITICAL";
+
+  $("percentage").textContent =
+    infection + "%";
+
+  $("infectionBar").style.width =
+    infection + "%";
+
+  if(infection >= 100) {
+    event(
+      "Maximum simulated infection reached",
+      "danger"
+    );
+  }
+}
+
+
+/* =========================
+   SCANNER
+========================= */
+
+function scanner() {
+
+  $("mainTitle").textContent =
+    "SCANNING STRAIN";
+
+  $("mainMessage").textContent =
+    "Analyzing fictional behavior...";
+
+  let p = 0;
+
+  const scan =
+    setInterval(() => {
+
+      p += random(6,13);
+
+      if(p >= 100) {
+
+        p = 100;
+
+        clearInterval(scan);
+
+        $("mainTitle").textContent =
+          "SCAN COMPLETE";
+
+        $("mainMessage").textContent =
+          "Fictional strain identified. No real device changes detected.";
+
+        event(
+          "Scanner completed safely",
+          "success"
+        );
+
+        return;
+      }
+
+      $("mainMessage").textContent =
+        `Analyzing simulated sectors... ${p}%`;
+
+    },300);
+}
+
+
+/* =========================
+   FAKE CRASH
+========================= */
+
+function fakeCrash() {
+
+  $("crash").classList.add("active");
+
+  let p = 0;
+
+  $("crashBar").style.width = "0%";
+
+  event(
+    "Simulated crash sequence initiated",
+    "danger"
+  );
+
+  const timer =
+    setInterval(() => {
+
+      p += random(4,10);
+
+      if(p >= 100) {
+
+        p = 100;
+
+        clearInterval(timer);
+
+        setTimeout(() => {
+
+          $("crash").classList.remove(
+            "active"
+          );
+
+          $("crashBar").style.width =
+            "0%";
+
+          $("crashPercent").textContent =
+            "0%";
+
+          event(
+            "Simulation recovered",
+            "success"
+          );
+
+        },1200);
+      }
+
+      $("crashBar").style.width =
+        p + "%";
+
+      $("crashPercent").textContent =
+        p + "%";
+
+    },250);
+}
+
+
+/* =========================
+   BLACKOUT
+========================= */
+
+function blackout() {
+
+  $("flash").classList.add("blackout");
+
+  event(
+    "Simulated blackout activated",
+    "danger"
+  );
+
+  setTimeout(() => {
+
+    $("flash").classList.remove(
+      "blackout"
+    );
+
+    event(
+      "Simulated display restored",
+      "success"
+    );
+
+  },2200);
+}
+
+
+/* =========================
+   CLEAN
+========================= */
+
+function clean() {
+
+  running = false;
+
+  clearInterval(bugTimer);
+  clearInterval(popupTimer);
+  clearInterval(effectTimer);
+  clearInterval(telemetryTimer);
+
+  document.querySelectorAll(".bug")
+    .forEach(x => x.remove());
+
+  $("popupLayer").innerHTML = "";
+
+  document.body.classList.remove(
+    "glitching",
+    "shaking"
+  );
+
+  infection = 0;
+  mutation = 0;
+  instances = 0;
+
+  $("infection").textContent = "0%";
+  $("infectionMeter").style.width = "0%";
+
+  $("mutation").textContent = "0%";
+  $("mutationMeter").style.width = "0%";
+
+  $("instances").textContent = "0";
+
+  $("cpu").textContent = "11%";
+  $("ram").textContent = "22%";
+
+  $("cpuMeter").style.width = "11%";
+  $("ramMeter").style.width = "22%";
+
+  $("threat").textContent = "LOW";
+
+  $("percentage").textContent = "0%";
+  $("infectionBar").style.width = "0%";
+
+  $("mode").textContent =
+    "CLEAN";
+
+  $("mainTitle").textContent =
+    "SIMULATION CLEAN";
+
+  $("mainMessage").textContent =
+    "All fictional strain effects have been cleared.";
+
+  event(
+    "Simulation cleaned successfully",
+    "success"
+  );
+}
+
+
+/* =========================
+   CHAOS
+========================= */
+
+function chaos() {
+
+  if(!running)
+    start();
+
+  $("bugs").checked = true;
+  $("glitches").checked = true;
+  $("errors").checked = true;
+  $("matrixToggle").checked = true;
+  $("shake").checked = true;
+
+  matrix(true);
+
+  document.body.classList.add(
+    "shaking"
+  );
+
+  event(
+    "CHAOS ENGINE ACTIVATED",
+    "danger"
+  );
+
+  for(let i=0;i<6;i++) {
+    setTimeout(spawnBug,i*250);
   }
 
-  addTerminal(message);
+  popup();
+  glitch();
+
+  setTimeout(fakeCrash,3500);
 }
 
-function addTerminal(message) {
-  const terminal = $("terminalOutput");
 
-  const line = document.createElement("div");
-  line.className = "log-line";
-  line.innerHTML = `<span>[${timeNow()}]</span> ${message}`;
+/* =========================
+   MATRIX
+========================= */
 
-  terminal.appendChild(line);
+function matrix(enabled) {
 
-  while (terminal.children.length > 8) {
-    terminal.firstElementChild.remove();
+  const old =
+    document.querySelectorAll(
+      ".matrix-column"
+    );
+
+  old.forEach(x => x.remove());
+
+  if(!enabled)
+    return;
+
+  for(let i=0;i<35;i++) {
+
+    const column =
+      document.createElement("div");
+
+    column.className =
+      "matrix-column";
+
+    column.style.position =
+      "fixed";
+
+    column.style.top = "-100%";
+
+    column.style.left =
+      random(0,100) + "%";
+
+    column.style.color =
+      "#00ff66";
+
+    column.style.fontFamily =
+      "monospace";
+
+    column.style.fontSize =
+      random(10,16) + "px";
+
+    column.style.zIndex = "100";
+
+    column.style.animation =
+      `matrixFall ${random(4,10)}s linear infinite`;
+
+    let text = "";
+
+    for(let j=0;j<30;j++) {
+      text +=
+        random(0,1) +
+        "<br>";
+    }
+
+    column.innerHTML = text;
+
+    $("matrix").appendChild(column);
   }
-
-  terminal.scrollTop = terminal.scrollHeight;
 }
 
-function updateStats() {
-  $("bugCount").textContent = bugs;
-  $("errorCount").textContent = errors;
-  $("glitchCount").textContent = glitches;
-
-  $("bugBar").style.width = Math.min(bugs * 3, 100) + "%";
-  $("errorBar").style.width = Math.min(errors * 5, 100) + "%";
-  $("glitchBar").style.width = Math.min(glitches * 3, 100) + "%";
-}
-
-function updateUptime() {
-  if (!startTime) return;
-
-  const seconds = Math.floor((Date.now() - startTime) / 1000);
-
-  const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
-  const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
-  const s = String(seconds % 60).padStart(2, "0");
-
-  $("uptime").textContent = `${h}:${m}:${s}`;
-}
 
 /* =========================
    SOUND
 ========================= */
 
-function beep(frequency = 440, duration = 70) {
-  if (!$("soundToggle").checked) return;
+function sound(freq,duration) {
+
+  if(!$("sound").checked)
+    return;
 
   try {
+
     const AudioContext =
-      window.AudioContext || window.webkitAudioContext;
+      window.AudioContext ||
+      window.webkitAudioContext;
 
-    const ctx = new AudioContext();
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const ctx =
+      new AudioContext();
 
-    oscillator.frequency.value = frequency;
-    oscillator.type = "square";
+    const oscillator =
+      ctx.createOscillator();
 
-    gain.gain.value = 0.035;
+    const gain =
+      ctx.createGain();
+
+    oscillator.type =
+      "square";
+
+    oscillator.frequency.value =
+      freq;
+
+    gain.gain.value =
+      .025;
 
     oscillator.connect(gain);
     gain.connect(ctx.destination);
@@ -157,571 +874,151 @@ function beep(frequency = 440, duration = 70) {
     oscillator.start();
 
     setTimeout(() => {
+
       oscillator.stop();
       ctx.close();
-    }, duration);
-  } catch (e) {
-    // Audio is optional.
-  }
+
+    },duration);
+
+  } catch(e) {}
 }
 
-/* =========================
-   BUGS
-========================= */
-
-function spawnBug() {
-  if (!running) return;
-
-  if (!$("bugsToggle").checked) return;
-
-  const bug = document.createElement("div");
-  bug.className = "bug";
-  bug.textContent = Math.random() > 0.5 ? "🪲" : "🐛";
-
-  bug.style.left = random(0, 90) + "vw";
-  bug.style.top = random(5, 85) + "vh";
-  bug.style.animationDuration = random(5, 12) + "s";
-
-  document.body.appendChild(bug);
-
-  bugs++;
-
-  log(
-    bugMessages[random(0, bugMessages.length - 1)],
-    "danger"
-  );
-
-  updateStats();
-
-  setTimeout(() => {
-    bug.remove();
-  }, 13000);
-
-  beep(250, 45);
-}
-
-/* =========================
-   ERROR POPUPS
-========================= */
-
-function createPopup() {
-  if (!running) return;
-
-  if (!$("popupToggle").checked) return;
-
-  errors++;
-
-  const popup = document.createElement("div");
-  popup.className = "fake-popup";
-
-  popup.style.left = random(5, 75) + "vw";
-  popup.style.top = random(12, 70) + "vh";
-
-  popup.innerHTML = `
-    <div class="popup-head">
-      <span>⚠ SIMULATED ERROR</span>
-      <span class="close-popup">×</span>
-    </div>
-
-    <div class="popup-body">
-      ${errorMessages[random(0, errorMessages.length - 1)]}
-
-      <br><br>
-
-      Error code:
-      <strong>0x${random(100000, 999999).toString(16).toUpperCase()}</strong>
-
-      <br>
-
-      <button>OK</button>
-    </div>
-  `;
-
-  $("popupContainer").appendChild(popup);
-
-  popup.querySelector(".close-popup").onclick = () => {
-    popup.remove();
-  };
-
-  popup.querySelector("button").onclick = () => {
-    popup.remove();
-  };
-
-  log("Fake error popup displayed", "danger");
-
-  updateStats();
-
-  beep(180, 90);
-
-  setTimeout(() => {
-    if (popup.isConnected) popup.remove();
-  }, 8000);
-}
-
-/* =========================
-   GLITCH
-========================= */
-
-function activateGlitch() {
-  if (!$("glitchToggle").checked && running) return;
-
-  glitches++;
-
-  document.body.classList.add("glitch-active");
-
-  setTimeout(() => {
-    document.body.classList.remove("glitch-active");
-  }, random(300, 1000));
-
-  log("Visual glitch effect activated", "danger");
-
-  updateStats();
-
-  beep(90, 60);
-}
-
-/* =========================
-   MATRIX
-========================= */
-
-function createMatrix() {
-  const matrix = $("matrix");
-
-  matrix.innerHTML = "";
-
-  for (let i = 0; i < 35; i++) {
-    const column = document.createElement("div");
-
-    column.className = "matrix-column";
-
-    column.style.left = random(0, 100) + "%";
-    column.style.animationDuration = random(4, 12) + "s";
-    column.style.animationDelay = random(0, 5) + "s";
-
-    let text = "";
-
-    for (let j = 0; j < random(10, 30); j++) {
-      text += random(0, 1) ? "1" : "0";
-      text += "<br>";
-    }
-
-    column.innerHTML = text;
-
-    matrix.appendChild(column);
-  }
-}
-
-function toggleMatrix(enabled) {
-  $("matrix").style.display = enabled ? "block" : "none";
-
-  if (enabled) {
-    createMatrix();
-    log("Matrix visual mode activated", "success");
-  } else {
-    log("Matrix visual mode disabled");
-  }
-}
-
-/* =========================
-   FAKE CPU / RAM
-========================= */
-
-function updateSystemStats() {
-  if (!running) {
-    $("cpu").textContent = "12%";
-    $("ram").textContent = "24%";
-
-    $("cpuBar").style.width = "12%";
-    $("ramBar").style.width = "24%";
-
-    return;
-  }
-
-  const chaos = $("chaosBtn").dataset.active === "true";
-
-  const cpu = chaos
-    ? random(75, 99)
-    : random(20, 80);
-
-  const ram = chaos
-    ? random(70, 96)
-    : random(25, 70);
-
-  $("cpu").textContent = cpu + "%";
-  $("ram").textContent = ram + "%";
-
-  $("cpuBar").style.width = cpu + "%";
-  $("ramBar").style.width = ram + "%";
-}
 
 /* =========================
    SHAKE
 ========================= */
 
-function toggleShake(enabled) {
-  if (enabled) {
-    document.body.classList.add("shake-active");
-    log("Screen shake simulation enabled");
-  } else {
-    document.body.classList.remove("shake-active");
-    log("Screen shake simulation disabled");
+$("shake").addEventListener(
+  "change",
+  e => {
+
+    if(e.target.checked)
+      document.body.classList.add(
+        "shaking"
+      );
+
+    else
+      document.body.classList.remove(
+        "shaking"
+      );
+
   }
-}
-
-/* =========================
-   START
-========================= */
-
-function startSimulator() {
-  if (running) return;
-
-  running = true;
-  startTime = Date.now();
-
-  $("statusText").textContent = "SIMULATION RUNNING";
-  $("modeLabel").textContent = "ACTIVE";
-  $("statusMessage").textContent = "RUNNING";
-
-  $("mainTitle").textContent = "SYSTEM BUG DETECTED";
-  $("mainMessage").textContent =
-    "Simulated bugs are now crawling through the interface.";
-
-  log("KNOX BUG simulator started", "success");
-
-  addTerminal("Simulation started successfully.");
-
-  uptimeTimer = setInterval(updateUptime, 1000);
-  statsTimer = setInterval(updateSystemStats, 1500);
-
-  bugTimer = setInterval(() => {
-    if ($("bugsToggle").checked) {
-      spawnBug();
-    }
-  }, 1800);
-
-  popupTimer = setInterval(() => {
-    if ($("popupToggle").checked) {
-      createPopup();
-    }
-  }, 5000);
-
-  glitchTimer = setInterval(() => {
-    if ($("glitchToggle").checked) {
-      activateGlitch();
-    }
-  }, 2300);
-
-  $("simulationScreen").classList.add("running");
-
-  beep(700, 100);
-}
-
-/* =========================
-   STOP
-========================= */
-
-function stopSimulator() {
-  running = false;
-
-  clearInterval(uptimeTimer);
-  clearInterval(statsTimer);
-  clearInterval(bugTimer);
-  clearInterval(popupTimer);
-  clearInterval(glitchTimer);
-
-  document.body.classList.remove("glitch-active");
-  document.body.classList.remove("shake-active");
-
-  $("statusText").textContent = "SYSTEM PAUSED";
-  $("modeLabel").textContent = "PAUSED";
-  $("statusMessage").textContent = "PAUSED";
-
-  log("Simulation stopped");
-
-  beep(250, 100);
-}
-
-/* =========================
-   RESET
-========================= */
-
-function resetSimulator() {
-  stopSimulator();
-
-  bugs = 0;
-  errors = 0;
-  glitches = 0;
-
-  startTime = null;
-
-  $("uptime").textContent = "00:00:00";
-
-  $("statusText").textContent = "SYSTEM ONLINE";
-  $("modeLabel").textContent = "IDLE";
-  $("statusMessage").textContent = "READY";
-
-  $("mainTitle").textContent = "KNOX BUG";
-  $("mainMessage").textContent =
-    "Ready to start the harmless bug simulation.";
-
-  $("popupContainer").innerHTML = "";
-  $("matrix").innerHTML = "";
-  $("matrix").style.display = "none";
-
-  document.querySelectorAll(".bug").forEach(b => b.remove());
-
-  document.body.classList.remove("glitch-active");
-  document.body.classList.remove("shake-active");
-
-  $("chaosBtn").dataset.active = "false";
-
-  updateStats();
-  updateSystemStats();
-
-  $("logs").innerHTML = `
-    <div class="log">
-      <time>${timeNow()}</time>
-      <span>System reset successfully.</span>
-    </div>
-  `;
-
-  $("terminalOutput").innerHTML = `
-    <div class="log-line">
-      <span>[RESET]</span> KNOX BUG simulator cleared
-    </div>
-    <div class="log-line">
-      <span>[READY]</span> Awaiting simulation...
-    </div>
-  `;
-}
-
-/* =========================
-   SCANNER
-========================= */
-
-function runScanner() {
-  $("mainTitle").textContent = "SCANNING...";
-  $("mainMessage").textContent =
-    "Searching the simulation for imaginary bugs.";
-
-  $("scanBtn").disabled = true;
-  $("scanBtn").textContent = "🔄 SCANNING...";
-
-  log("Bug scanner started", "success");
-
-  let progress = 0;
-
-  const scanner = setInterval(() => {
-    progress += random(5, 15);
-
-    if (progress >= 100) {
-      progress = 100;
-      clearInterval(scanner);
-
-      $("mainTitle").textContent = "BUGS FOUND";
-      $("mainMessage").textContent =
-        "Simulation scan complete. No real device changes detected.";
-
-      $("scanBtn").disabled = false;
-      $("scanBtn").textContent = "🔍 SCAN AGAIN";
-
-      log("Bug scan completed — simulation safe", "success");
-
-      if (running && $("bugsToggle").checked) {
-        for (let i = 0; i < 4; i++) {
-          setTimeout(spawnBug, i * 400);
-        }
-      }
-
-      return;
-    }
-
-    $("mainMessage").textContent =
-      `Scanning virtual sectors... ${progress}%`;
-  }, 350);
-}
-
-/* =========================
-   FAKE CRASH
-========================= */
-
-function fakeCrash() {
-  log("Fake crash sequence triggered", "danger");
-
-  $("crashScreen").classList.add("show");
-
-  let progress = 0;
-
-  const interval = setInterval(() => {
-    progress += random(4, 12);
-
-    if (progress >= 100) {
-      progress = 100;
-      clearInterval(interval);
-
-      setTimeout(() => {
-        $("crashScreen").classList.remove("show");
-
-        $("crashProgress").style.width = "0%";
-        $("crashPercent").textContent = "0% complete";
-
-        log("Fake system restart completed", "success");
-
-        $("mainTitle").textContent = "SYSTEM RECOVERED";
-        $("mainMessage").textContent =
-          "The simulated crash has been cleared.";
-      }, 1200);
-    }
-
-    $("crashProgress").style.width = progress + "%";
-    $("crashPercent").textContent =
-      progress + "% complete";
-  }, 250);
-}
-
-/* =========================
-   CHAOS MODE
-========================= */
-
-function chaosMode() {
-  const button = $("chaosBtn");
-
-  const active = button.dataset.active === "true";
-
-  if (active) {
-    button.dataset.active = "false";
-    button.textContent = "☠️ CHAOS MODE";
-
-    log("Chaos mode disabled");
-
-    $("bugsToggle").checked = false;
-    $("glitchToggle").checked = false;
-    $("popupToggle").checked = false;
-    $("matrixToggle").checked = false;
-    $("shakeToggle").checked = false;
-
-    toggleMatrix(false);
-    toggleShake(false);
-
-    return;
-  }
-
-  if (!running) {
-    startSimulator();
-  }
-
-  button.dataset.active = "true";
-  button.textContent = "☠️ CHAOS ACTIVE";
-
-  $("bugsToggle").checked = true;
-  $("glitchToggle").checked = true;
-  $("popupToggle").checked = true;
-  $("logsToggle").checked = true;
-  $("matrixToggle").checked = true;
-  $("shakeToggle").checked = true;
-
-  toggleMatrix(true);
-  toggleShake(true);
-
-  log("☠ CHAOS MODE ACTIVATED", "danger");
-
-  $("mainTitle").textContent = "CHAOS MODE";
-  $("mainMessage").textContent =
-    "Multiple visual simulation effects are active.";
-
-  for (let i = 0; i < 5; i++) {
-    setTimeout(spawnBug, i * 250);
-  }
-
-  createPopup();
-  activateGlitch();
-}
-
-/* =========================
-   QUICK TOOL ACTIONS
-========================= */
-
-function quickEffect(effect) {
-  switch (effect) {
-
-    case "bug":
-      if (!running) startSimulator();
-      $("bugsToggle").checked = true;
-      spawnBug();
-      spawnBug();
-      break;
-
-    case "glitch":
-      if (!running) startSimulator();
-      $("glitchToggle").checked = true;
-      activateGlitch();
-      break;
-
-    case "error":
-      if (!running) startSimulator();
-      $("popupToggle").checked = true;
-      createPopup();
-      break;
-
-    case "crash":
-      fakeCrash();
-      break;
-
-    case "matrix":
-      $("matrixToggle").checked =
-        !$("matrixToggle").checked;
-
-      toggleMatrix($("matrixToggle").checked);
-      break;
-
-    case "scan":
-      runScanner();
-      break;
-  }
-}
-
-/* =========================
-   EVENT LISTENERS
-========================= */
-
-$("startBtn").addEventListener("click", startSimulator);
-
-$("stopBtn").addEventListener("click", stopSimulator);
-
-$("resetBtn").addEventListener("click", resetSimulator);
-
-$("scanBtn").addEventListener("click", runScanner);
-
-$("chaosBtn").addEventListener("click", chaosMode);
-
-$("matrixToggle").addEventListener("change", e => {
-  toggleMatrix(e.target.checked);
-});
-
-$("shakeToggle").addEventListener("change", e => {
-  toggleShake(e.target.checked);
-});
-
-document.querySelectorAll(".quick-tools button").forEach(button => {
-  button.addEventListener("click", () => {
-    quickEffect(button.dataset.effect);
-  });
-});
-
-/* =========================
-   INITIALIZATION
-========================= */
-
-updateStats();
-updateSystemStats();
-
-log("KNOX BUG ready", "success");
-
-console.log(
-  "%cKNOX BUG",
-  "color:red;font-size:30px;font-weight:bold"
 );
 
-console.log(
-  "Harmless browser simulation loaded."
+$("matrixToggle").addEventListener(
+  "change",
+  e => matrix(e.target.checked)
+);
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+$("startBtn")
+  .addEventListener("click",start);
+
+$("mutateBtn")
+  .addEventListener("click",mutate);
+
+$("scanBtn")
+  .addEventListener("click",scanner);
+
+$("cleanBtn")
+  .addEventListener("click",clean);
+
+$("chaosBtn")
+  .addEventListener("click",chaos);
+
+document.querySelectorAll(
+  ".tools button"
+).forEach(button => {
+
+  button.addEventListener(
+    "click",
+    () => {
+
+      const tool =
+        button.dataset.tool;
+
+      if(tool === "swarm") {
+
+        if(!running)
+          start();
+
+        for(let i=0;i<3;i++)
+          setTimeout(
+            spawnBug,
+            i*300
+          );
+
+      }
+
+      if(tool === "glitch") {
+
+        if(!running)
+          start();
+
+        glitch();
+
+      }
+
+      if(tool === "popup") {
+
+        if(!running)
+          start();
+
+        popup();
+
+      }
+
+      if(tool === "crash")
+        fakeCrash();
+
+      if(tool === "blackout")
+        blackout();
+
+      if(tool === "scan")
+        scanner();
+
+    }
+  );
+
+});
+
+
+/* =========================
+   THEME BUTTON
+========================= */
+
+$("themeBtn").addEventListener(
+  "click",
+  () => {
+
+    document.body.classList.toggle(
+      "bright-mode"
+    );
+
+    event(
+      "Interface theme toggled"
+    );
+
+  }
+);
+
+
+/* =========================
+   INITIAL STATE
+========================= */
+
+$("signature").textContent =
+  makeSignature();
+
+event(
+  "KNOX BUG v2 initialized",
+  "success"
+);
+
+event(
+  "Waiting for fictional strain..."
 );
