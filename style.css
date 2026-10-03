@@ -830,3 +830,39 @@ footer {
     font-size: 21px;
   }
   }
+#matrix {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.matrix-column {
+  animation-name: matrixFall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes matrixFall {
+  from {
+    transform: translateY(-120vh);
+  }
+
+  to {
+    transform: translateY(220vh);
+  }
+}
+
+#flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 14000;
+  background: #000;
+  opacity: 0;
+}
+
+#flash.blackout {
+  opacity: 1;
+}
